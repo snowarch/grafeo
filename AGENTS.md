@@ -1,65 +1,70 @@
-# AGENTS.md — Guía para Agentes IA trabajando en Grafeo
+# AGENTS.md — Guide for AI Agents Working on Grafeo
 
-Este repositorio implementa **Grafeo**, un servidor MCP que indexa cualquier repositorio hacia un grafo relacional persistente en **SpacetimeDB**.
+Grafeo is a production MCP server that indexes any repository into a persistent relational graph powered by SpacetimeDB.
 
-## Objetivo
+## Mission
 
-- Proveer herramientas MCP para que agentes de código obtengan contexto **persistente** (archivos, símbolos, dependencias, exports, módulos).
-- Mantener un flujo seguro para cambios: detectar impacto, reindexar, auditar, y validar.
+- Provide durable, structured codebase context for coding agents (files, symbols, dependencies, exports, modules, conventions, decisions, tasks, change history).
+- Preserve safe and repeatable change workflows: analyze impact, edit minimally, reindex, and validate.
 
-## Reglas de contribución (rápidas)
+## Core Contribution Rules
 
-- Cambios mínimos y enfocados.
-- Evitar APIs inventadas: validar en código antes de usar.
-- Antes de tocar indexación o parsing, agregar/actualizar tests.
-- Siempre correr:
+- Keep changes minimal and focused.
+- Do not invent APIs; verify actual behavior in code first.
+- Before touching indexing/parsing behavior, add or update tests.
+- Always run these gates:
   - `npx tsc --noEmit`
   - `npm test`
+  - `npm run build`
 
-## Arquitectura
+## Architecture Map
 
 - `src/mcp-server.ts`
-  - Define las **28 tools** del MCP.
-  - Responde consultas leyendo de SpacetimeDB (SQL) + reducers.
+  - Defines the MCP tools and their handlers.
+  - Serves data from SpacetimeDB through SQL + reducers.
 
 - `src/indexer/`
-  - `scanner.ts`: walk del FS, ignora dirs comunes, lee archivos.
-  - `index.ts`: orquesta escaneo + parsing + persistencia en SpacetimeDB.
+  - `scanner.ts`: project file walk, filtering, file reads, hashes.
+  - `index.ts`: scan → parse → persist pipeline.
 
 - `src/plugins/`
-  - `base.ts`: interfaz `LanguagePlugin`.
-  - `registry.ts`: enruta por extensión.
-  - `typescript.ts`, `python.ts`: parsers reales.
-  - `generic.ts`: fallback multi-lenguaje.
+  - `base.ts`: `LanguagePlugin` contract.
+  - `registry.ts`: extension-to-plugin routing.
+  - `typescript.ts`, `python.ts`: specialized parsers.
+  - `generic.ts`: fallback parser for unsupported languages.
 
 - `spacetimedb/src/index.ts`
-  - Esquema y reducers del módulo de SpacetimeDB.
+  - SpacetimeDB schema and reducers.
 
-## Flujo recomendado (para agentes)
+## Agent Workflow (Recommended)
 
-1. **Bootstrap**
-   - Usar `session_bootstrap` para obtener:
-     - reglas del proyecto
-     - tareas activas
-     - convenciones
-     - estado del índice
+1. **Bootstrap context first**
+   - Call `session_bootstrap` to get project rules, active tasks, conventions, index status, and recent changes.
 
-2. **Antes de editar**
-   - Usar `preflight_check(intent, files[])`.
-   - Revisar `get_blast_radius(file)` para medir impacto.
+2. **Before editing**
+   - Call `preflight_check(intent, files[])`.
+   - For risky files, inspect blast radius with `get_blast_radius(file)`.
 
-3. **Durante el trabajo**
-   - Usar `find_examples(pattern)` antes de agregar nuevas heurísticas.
-   - Mantener consistencia en la forma de almacenar datos (tablas y reducers existentes).
+3. **During implementation**
+   - Use `find_examples(pattern)` before introducing a new pattern.
+   - Keep data writes consistent with existing table/reducer contracts.
 
-4. **Después de editar**
-   - Usar `postchange_audit(changes[])` (reindex + log).
+4. **After editing**
+   - Call `postchange_audit(changes[])` to reindex changed files and log updates.
 
-## Validación mínima
+## MCP Validation Checklist
 
-- `npm run build`
-- `npm test`
+Use this minimum smoke suite before concluding work:
 
-## Notas
+1. `tools/list`
+2. `get_project_stats`
+3. `search_codebase`
+4. `get_file_context`
+5. `session_bootstrap`
 
-- El MCP usa `stdio` y se integra con IDEs (Windsurf/Cursor/Claude) via `grafeo setup <ide>`.
+If any tool returns `Error in <tool>: ...`, treat it as a release blocker.
+
+## Notes
+
+- Grafeo MCP transport is `stdio`.
+- IDE setup entry point: `grafeo setup <windsurf|cursor|claude>`.

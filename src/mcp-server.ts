@@ -518,11 +518,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const meta = metaRes?.rows?.length ? sqlRowsToObjects(metaRes) : [];
         const metaMap = Object.fromEntries(meta.map((m: any) => [m.key, m.value]));
 
-        const [typeRes] = await sql(`SELECT file_type, COUNT(*) as cnt FROM files GROUP BY file_type`);
-        const byType = typeRes?.rows?.length ? sqlRowsToObjects(typeRes) : [];
+        // SpacetimeDB SQL is a subset; GROUP BY is not supported. Aggregate in JS.
+        const [filesRes] = await sql(`SELECT file_type, module_name FROM files`);
+        const files = filesRes?.rows?.length ? sqlRowsToObjects(filesRes) : [];
 
-        const [modRes] = await sql(`SELECT module_name, COUNT(*) as cnt FROM files GROUP BY module_name`);
-        const byModule = modRes?.rows?.length ? sqlRowsToObjects(modRes) : [];
+        const typeCounts = new Map<string, number>();
+        const moduleCounts = new Map<string, number>();
+
+        for (const f of files as any[]) {
+          const ft = String(f.file_type ?? f.fileType ?? 'unknown');
+          const mn = String(f.module_name ?? f.moduleName ?? 'unknown');
+          typeCounts.set(ft, (typeCounts.get(ft) || 0) + 1);
+          moduleCounts.set(mn, (moduleCounts.get(mn) || 0) + 1);
+        }
+
+        const byType = Array.from(typeCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([file_type, cnt]) => ({ file_type, cnt }));
+
+        const byModule = Array.from(moduleCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([module_name, cnt]) => ({ module_name, cnt }));
 
         return text([
           `# Project Statistics`,
@@ -538,13 +554,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'find_hotspots': {
-        // Most imported files
-        const [impRes] = await sql(`SELECT target_file, COUNT(*) as cnt FROM dependencies GROUP BY target_file ORDER BY cnt DESC`);
-        const topImported = impRes?.rows?.length ? sqlRowsToObjects(impRes).slice(0, 10) : [];
+        // Most imported files (aggregate in JS; SpacetimeDB SQL subset has no GROUP BY/ORDER BY)
+        const [impRes] = await sql(`SELECT target_file FROM dependencies`);
+        const deps = impRes?.rows?.length ? sqlRowsToObjects(impRes) : [];
+        const importCounts = new Map<string, number>();
+        for (const d of deps as any[]) {
+          const target = String(d.target_file || d.targetFile || 'unknown');
+          importCounts.set(target, (importCounts.get(target) || 0) + 1);
+        }
+        const topImported = Array.from(importCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([target_file, cnt]) => ({ target_file, cnt }));
 
-        // Most used exports
-        const [expRes] = await sql(`SELECT name, usage_count, file_path FROM exports ORDER BY usage_count DESC`);
-        const topExports = expRes?.rows?.length ? sqlRowsToObjects(expRes).slice(0, 10) : [];
+        // Most used exports (sort in JS)
+        const [expRes] = await sql(`SELECT name, usage_count, file_path FROM exports`);
+        const topExports = expRes?.rows?.length
+          ? sqlRowsToObjects(expRes)
+              .sort((a: any, b: any) => Number(b.usage_count || b.usageCount || 0) - Number(a.usage_count || a.usageCount || 0))
+              .slice(0, 10)
+          : [];
 
         // Highest complexity
         const [compRes] = await sql(`SELECT path, complexity, size FROM files WHERE complexity = 'high'`);
@@ -566,8 +595,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'get_recent_changes': {
         const limit = (args as { limit?: number }).limit || 20;
-        const [res] = await sql(`SELECT * FROM change_history ORDER BY timestamp DESC`);
-        const changes = res?.rows?.length ? sqlRowsToObjects(res).slice(0, limit) : [];
+        const [res] = await sql(`SELECT * FROM change_history`);
+        const changes = res?.rows?.length
+          ? sqlRowsToObjects(res)
+              .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
+              .slice(0, limit)
+          : [];
         return text(changes.length
           ? changes.map((c: any) => {
               const ts = new Date(Number(c.timestamp)).toISOString();
@@ -650,8 +683,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         parts.push(`Files: ${metaMap.fileCount || 0} | Symbols: ${metaMap.symbolCount || 0} | Last: ${metaMap.lastIndexed || 'never'}`);
 
         // Recent changes
-        const [chRes] = await sql(`SELECT * FROM change_history ORDER BY timestamp DESC`);
-        const changes = chRes?.rows?.length ? sqlRowsToObjects(chRes).slice(0, 5) : [];
+        const [chRes] = await sql(`SELECT * FROM change_history`);
+        const changes = chRes?.rows?.length
+          ? sqlRowsToObjects(chRes)
+              .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
+              .slice(0, 5)
+          : [];
         parts.push(`\n## Recent Changes (${changes.length})`);
         for (const c of changes as any[]) {
           parts.push(`- ${c.change_type || c.changeType} ${c.file_path || c.filePath}: ${c.summary}`);

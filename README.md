@@ -4,7 +4,7 @@
 
 **Deep code intelligence for AI agents.** Give any AI coding assistant persistent, structural understanding of your entire codebase — powered by [SpacetimeDB](https://spacetimedb.com).
 
-Grafeo is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that indexes your project into a relational knowledge graph: files, symbols, dependencies, exports, modules, conventions, decisions, tasks, and change history. AI agents query this graph through 28 specialized tools instead of re-reading your code every session.
+Grafeo is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that indexes your project into a relational knowledge graph: files, symbols, dependencies, exports, modules, conventions, decisions, tasks, and change history. AI agents query this graph through 29 specialized tools instead of re-reading your code every session.
 
 ---
 
@@ -13,9 +13,50 @@ Grafeo is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io) serv
 - **Universal** — Works with any language. Built-in plugins for TypeScript/JavaScript and Python. Generic fallback for Rust, Go, Java, C#, and more.
 - **Auto-detection** — Detects languages, frameworks (Next.js, React, Flask, Django, etc.), and project structure automatically.
 - **Persistent knowledge** — SpacetimeDB stores everything relationally. Conventions, decisions, annotations, and tasks survive across sessions.
-- **28 MCP tools** — Context, search, blast radius, dependency graphs, conventions, tasks, analytics, and power tools like `session_bootstrap` and `preflight_check`.
+- **29 MCP tools** — Context, search, blast radius, dependency graphs, conventions, tasks, analytics, and power tools like `session_bootstrap` and `preflight_check`.
 - **Plugin architecture** — Add language support by implementing a single `LanguagePlugin` interface.
 - **IDE setup** — One command configures Windsurf, Cursor, or Claude Desktop.
+
+## For Coding Agents (Copy/Paste Prompt)
+
+Use this prompt to let a coding agent set up Grafeo in one pass:
+
+```text
+You are setting up Grafeo from scratch in this repository.
+
+Goals:
+1) Install dependencies
+2) Build project
+3) Publish SpacetimeDB module locally
+4) Initialize and index this repo with Grafeo
+5) Configure MCP for my IDE
+6) Run MCP smoke tests and report pass/fail with evidence
+
+Execution requirements:
+- Run in this exact order:
+  a) npm install
+  b) npm run build
+  c) (cd spacetimedb && npm install)
+  d) spacetime start
+  e) spacetime publish grafeo -s local -p ./spacetimedb --no-config -y
+  f) npx tsx src/cli.ts init .
+  g) SPACETIMEDB_DB=grafeo npx tsx src/cli.ts index .
+  h) npx tsx src/cli.ts setup windsurf
+- Then run MCP smoke tests over stdio by calling at least:
+  - tools/list
+  - get_project_stats
+  - search_codebase(query="indexProject")
+  - get_file_context(path="src/mcp-server.ts")
+  - session_bootstrap
+- If any tool returns "Error in <tool>", treat it as release-blocking and fix it.
+- End with:
+  - commands run
+  - key outputs
+  - what was fixed
+  - remaining blockers (if any)
+```
+
+Detailed operational docs for agents are in [`docs/`](./docs/README.md).
 
 ---
 
@@ -93,7 +134,7 @@ npx tsx /path/to/grafeo/src/cli.ts setup claude
 
 ---
 
-## MCP Tools (28)
+## MCP Tools (29)
 
 ### Context & Understanding
 | Tool | Description |
@@ -156,7 +197,7 @@ npx tsx /path/to/grafeo/src/cli.ts setup claude
 grafeo/
 ├── src/
 │   ├── cli.ts              # CLI entry point (init, index, serve, setup, status)
-│   ├── mcp-server.ts       # MCP server with 28 tools
+│   ├── mcp-server.ts       # MCP server with 29 tools
 │   ├── db.ts               # SpacetimeDB HTTP client
 │   ├── config.ts           # Project config management
 │   ├── detector.ts         # Auto-detection (languages, frameworks)

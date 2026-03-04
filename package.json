@@ -12,8 +12,8 @@
   },
   "homepage": "https://github.com/snowarch/grafeo#readme",
   "bin": {
-    "grafeo": "./dist/cli.js",
-    "grafeo-mcp": "./dist/cli.js"
+    "grafeo": "dist/cli.js",
+    "grafeo-mcp": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
