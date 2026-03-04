@@ -51,7 +51,10 @@
   },
   "files": [
     "dist/",
-    "spacetimedb/",
+    "spacetimedb/src/",
+    "spacetimedb/package.json",
+    "spacetimedb/package-lock.json",
+    "spacetimedb/tsconfig.json",
     "README.md",
     "LICENSE"
   ],

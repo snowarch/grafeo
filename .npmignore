@@ -1,0 +1,14 @@
+spacetimedb/node_modules/
+spacetimedb/dist/
+spacetimedb/.spacetime/
+spacetimedb/*.tgz
+
+node_modules/
+dist/**/*.map
+
+test/
+.github/
+.vscode/
+.idea/
+
+*.log
