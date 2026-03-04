@@ -373,9 +373,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!expRes?.rows?.length) return text(`Export not found: ${exportName}`);
         const exp = sqlRowsToObjects(expRes)[0] as any;
 
-        // Find usage: files that import this export
-        const [usageRes] = await sql(`SELECT source_file FROM dependencies WHERE target_file LIKE '%${esc(exportName)}%'`);
-        const usages = usageRes?.rows?.length ? sqlRowsToObjects(usageRes) : [];
+        // Find usage: infer from parsed import symbols (Spacetime SQL subset does not support LIKE)
+        const [importRes] = await sql(`SELECT * FROM symbols WHERE kind = 'import'`);
+        const importSymbols = importRes?.rows?.length ? sqlRowsToObjects(importRes) : [];
+        const usageFiles = new Set<string>();
+        for (const sym of importSymbols as any[]) {
+          const importType = String(sym.type_info ?? sym.typeInfo ?? '');
+          const importedNames = parseImportedNames(importType);
+          if (importedNames.includes(exportName)) {
+            const file = String(sym.file_path ?? sym.filePath ?? '');
+            if (file) usageFiles.add(file);
+          }
+        }
+        const usages = [...usageFiles];
 
         let props = '[]', methods = '[]', signals = '[]';
         try { props = JSON.parse(exp.properties || '[]'); } catch { /* */ }
@@ -391,7 +401,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           `## Signals: ${JSON.stringify(signals)}`,
           '',
           `## Used by (${usages.length} files)`,
-          ...usages.slice(0, 30).map((u: any) => `- ${u.source_file || u.sourceFile}`),
+          ...usages.slice(0, 30).map((file) => `- ${file}`),
         ].join('\n'));
       }
 
@@ -555,7 +565,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'find_hotspots': {
         // Most imported files (aggregate in JS; SpacetimeDB SQL subset has no GROUP BY/ORDER BY)
-        const [impRes] = await sql(`SELECT target_file FROM dependencies`);
+        const [impRes] = await sql(`SELECT * FROM dependencies`);
         const deps = impRes?.rows?.length ? sqlRowsToObjects(impRes) : [];
         const importCounts = new Map<string, number>();
         for (const d of deps as any[]) {
@@ -568,7 +578,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           .map(([target_file, cnt]) => ({ target_file, cnt }));
 
         // Most used exports (sort in JS)
-        const [expRes] = await sql(`SELECT name, usage_count, file_path FROM exports`);
+        const [expRes] = await sql(`SELECT * FROM exports`);
         const topExports = expRes?.rows?.length
           ? sqlRowsToObjects(expRes)
               .sort((a: any, b: any) => Number(b.usage_count || b.usageCount || 0) - Number(a.usage_count || a.usageCount || 0))
@@ -595,12 +605,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'get_recent_changes': {
         const limit = (args as { limit?: number }).limit || 20;
-        const [res] = await sql(`SELECT * FROM change_history`);
-        const changes = res?.rows?.length
-          ? sqlRowsToObjects(res)
-              .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
-              .slice(0, limit)
-          : [];
+        const changes = (await getChangeHistoryRows())
+          .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
+          .slice(0, limit);
         return text(changes.length
           ? changes.map((c: any) => {
               const ts = new Date(Number(c.timestamp)).toISOString();
@@ -683,12 +690,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         parts.push(`Files: ${metaMap.fileCount || 0} | Symbols: ${metaMap.symbolCount || 0} | Last: ${metaMap.lastIndexed || 'never'}`);
 
         // Recent changes
-        const [chRes] = await sql(`SELECT * FROM change_history`);
-        const changes = chRes?.rows?.length
-          ? sqlRowsToObjects(chRes)
-              .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
-              .slice(0, 5)
-          : [];
+        const changes = (await getChangeHistoryRows())
+          .sort((a: any, b: any) => Number(b.timestamp || 0) - Number(a.timestamp || 0))
+          .slice(0, 5);
         parts.push(`\n## Recent Changes (${changes.length})`);
         for (const c of changes as any[]) {
           parts.push(`- ${c.change_type || c.changeType} ${c.file_path || c.filePath}: ${c.summary}`);
@@ -859,6 +863,25 @@ function text(content: string) {
 
 function esc(s: string): string {
   return s.replace(/'/g, "''");
+}
+
+function parseImportedNames(typeInfo: string): string[] {
+  if (!typeInfo) return [];
+  return typeInfo
+    .split(',')
+    .map(part => part.trim())
+    .map(part => part.split(/\s+as\s+/)[0].trim())
+    .filter(Boolean);
+}
+
+async function getChangeHistoryRows(): Promise<Record<string, unknown>[]> {
+  try {
+    const [res] = await sql(`SELECT * FROM change_history`);
+    return res?.rows?.length ? sqlRowsToObjects(res) : [];
+  } catch {
+    const [res] = await sql(`SELECT * FROM changeHistory`);
+    return res?.rows?.length ? sqlRowsToObjects(res) : [];
+  }
 }
 
 // =============================================================================

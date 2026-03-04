@@ -17,7 +17,7 @@ Grafeo is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io) serv
 - **Plugin architecture** — Add language support by implementing a single `LanguagePlugin` interface.
 - **IDE setup** — One command configures Windsurf, Cursor, or Claude Desktop.
 
-## For Coding Agents (Copy/Paste Prompt)
+## For Coding Agents (Repo Setup Prompt)
 
 Use this prompt to let a coding agent set up Grafeo in one pass:
 
@@ -58,9 +58,84 @@ Execution requirements:
 
 Detailed operational docs for agents are in [`docs/`](./docs/README.md).
 
+## For Coding Agents (npm Package Prompt)
+
+Use this when setting up Grafeo inside another project via npm:
+
+```text
+You are setting up Grafeo inside an existing project via npm.
+
+Goals:
+1) Install Grafeo
+2) Publish SpacetimeDB module locally
+3) Initialize and index the target project
+4) Configure MCP for my IDE
+5) Run MCP smoke tests and report pass/fail with evidence
+
+Execution requirements:
+- Run in this exact order (from the project root):
+  a) npm install --save-dev grafeo-mcp
+  b) spacetime start
+  c) spacetime publish grafeo -s local -p node_modules/grafeo-mcp/spacetimedb --no-config -y
+  d) npx grafeo init .
+  e) SPACETIMEDB_DB=grafeo npx grafeo index .
+  f) npx grafeo setup windsurf
+- Then run MCP smoke tests over stdio by calling at least:
+  - tools/list
+  - get_project_stats
+  - search_codebase(query="indexProject")
+  - get_file_context(path="src/mcp-server.ts")
+  - session_bootstrap
+- If any call returns "Error in <tool>", treat it as release-blocking and fix it.
+- End by printing:
+  - commands run
+  - key outputs
+  - what was fixed
+  - remaining blockers (if any)
+```
+
 ---
 
-## Quick Start
+## Quick Start (npm package)
+
+### Prerequisites
+
+- **Node.js** >= 18
+- **SpacetimeDB CLI** — `curl -sSf https://install.spacetimedb.com | sh`
+
+### 1. Install
+
+```bash
+npm install --save-dev grafeo-mcp
+# Or globally:
+# npm install -g grafeo-mcp
+```
+
+### 2. Start SpacetimeDB & publish module
+
+```bash
+spacetime start
+spacetime publish grafeo -s local -p node_modules/grafeo-mcp/spacetimedb --no-config -y
+```
+
+### 3. Initialize & index your project
+
+```bash
+npx grafeo init .
+SPACETIMEDB_DB=grafeo npx grafeo index .
+```
+
+### 4. Configure your IDE
+
+```bash
+npx grafeo setup windsurf
+```
+
+> If you installed globally, replace `npx grafeo` with `grafeo`. If your package manager does not use `node_modules`, point `-p` to the actual `grafeo-mcp/spacetimedb` folder.
+
+---
+
+## Quick Start (from source)
 
 ### Prerequisites
 
@@ -73,6 +148,7 @@ Detailed operational docs for agents are in [`docs/`](./docs/README.md).
 git clone https://github.com/snowarch/grafeo.git
 cd grafeo
 npm install
+npm run build
 cd spacetimedb && npm install && cd ..
 ```
 
@@ -135,6 +211,8 @@ npx tsx /path/to/grafeo/src/cli.ts setup claude
 ---
 
 ## MCP Tools (29)
+
+Full input/behavior reference: [`docs/tools.md`](./docs/tools.md).
 
 ### Context & Understanding
 | Tool | Description |

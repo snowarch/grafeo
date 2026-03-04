@@ -149,9 +149,10 @@ async function cmdSetup(ide?: string) {
   const config = await loadConfig(projectRoot);
   const dbName = config?.spacetimedb.database || 'grafeo';
 
-  const mcpConfig = {
-    command: 'npx',
-    args: ['tsx', join(projectRoot, 'node_modules', 'grafeo-mcp', 'src', 'mcp-server.ts')],
+  const packageServerPath = join(projectRoot, 'node_modules', 'grafeo-mcp', 'dist', 'mcp-server.js');
+  const packageMcpConfig = {
+    command: 'node',
+    args: [packageServerPath],
     env: {
       GRAFEO_PROJECT_ROOT: projectRoot,
       SPACETIMEDB_DB: dbName,
@@ -159,14 +160,25 @@ async function cmdSetup(ide?: string) {
   };
 
   // If running from source (dev mode)
+  const devServerPath = join(projectRoot, 'src', 'mcp-server.ts');
   const devMcpConfig = {
     command: 'npx',
-    args: ['tsx', join(projectRoot, 'src', 'mcp-server.ts')],
+    args: ['tsx', devServerPath],
     env: {
       GRAFEO_PROJECT_ROOT: projectRoot,
       SPACETIMEDB_DB: dbName,
     },
   };
+
+  const useDev = await pathExists(devServerPath);
+  const usePackage = await pathExists(packageServerPath);
+  if (!useDev && !usePackage) {
+    console.error('❌ Cannot locate MCP server entry point.');
+    console.error('   Install grafeo-mcp in this project or run from the Grafeo repo.\n');
+    process.exit(1);
+  }
+
+  const selectedConfig = useDev ? devMcpConfig : packageMcpConfig;
 
   const serverName = `grafeo-${config?.name || 'project'}`;
 
@@ -174,21 +186,21 @@ async function cmdSetup(ide?: string) {
     case 'windsurf': {
       const configDir = join(process.env.HOME || '~', '.codeium', 'windsurf');
       const configFile = join(configDir, 'mcp_config.json');
-      await mergeJsonConfig(configFile, serverName, devMcpConfig);
+      await mergeJsonConfig(configFile, serverName, selectedConfig);
       console.log(`\n✅ Windsurf MCP configured: ${configFile}`);
       console.log(`   Server name: ${serverName}\n`);
       break;
     }
     case 'cursor': {
       const configFile = join(projectRoot, '.cursor', 'mcp.json');
-      await mergeJsonConfig(configFile, serverName, devMcpConfig);
+      await mergeJsonConfig(configFile, serverName, selectedConfig);
       console.log(`\n✅ Cursor MCP configured: ${configFile}`);
       console.log(`   Server name: ${serverName}\n`);
       break;
     }
     case 'claude': {
       const configFile = join(projectRoot, '.claude', 'mcp.json');
-      await mergeJsonConfig(configFile, serverName, devMcpConfig);
+      await mergeJsonConfig(configFile, serverName, selectedConfig);
       console.log(`\n✅ Claude MCP configured: ${configFile}`);
       console.log(`   Server name: ${serverName}\n`);
       break;
@@ -259,6 +271,15 @@ async function mergeJsonConfig(
   existing.mcpServers[serverName] = mcpConfig;
 
   await writeFile(configFile, JSON.stringify(existing, null, 2) + '\n', 'utf-8');
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 main().catch(err => {

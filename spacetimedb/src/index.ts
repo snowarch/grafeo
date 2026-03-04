@@ -318,6 +318,17 @@ export const clear_exports = spacetimedb.reducer((ctx: any) => {
   }
 });
 
+export const delete_exports_for_file = spacetimedb.reducer(
+  { filePath: t.string() },
+  (ctx: any, { filePath }: any) => {
+    for (const row of ctx.db.exports.iter()) {
+      if (row.filePath === filePath) {
+        ctx.db.exports.name.delete(row.name);
+      }
+    }
+  }
+);
+
 // =============================================================================
 // Reducers: Module Summaries
 // =============================================================================
@@ -395,6 +406,17 @@ export const clear_custom_entries_for_plugin = spacetimedb.reducer(
   (ctx: any, { pluginName }: any) => {
     for (const row of ctx.db.customEntries.iter()) {
       if (row.pluginName === pluginName) {
+        ctx.db.customEntries.id.delete(row.id);
+      }
+    }
+  }
+);
+
+export const delete_custom_entries_for_file = spacetimedb.reducer(
+  { filePath: t.string() },
+  (ctx: any, { filePath }: any) => {
+    for (const row of ctx.db.customEntries.iter()) {
+      if (row.filePath === filePath) {
         ctx.db.customEntries.id.delete(row.id);
       }
     }

@@ -209,6 +209,8 @@ export async function reindexFile(filePath: string, projectRoot: string, config?
   // Clear old data for this file
   await callReducer('delete_symbols_for_file', { filePath: relPath });
   await callReducer('delete_deps_for_file', { sourceFile: relPath });
+  await callReducer('delete_exports_for_file', { filePath: relPath });
+  await callReducer('delete_custom_entries_for_file', { filePath: relPath });
 
   // Re-index file
   const ext = extname(relPath).replace('.', '') || 'unknown';
@@ -241,9 +243,18 @@ export async function reindexFile(filePath: string, projectRoot: string, config?
   }
 
   for (const imp of parseResult.imports) {
+    const resolvedTarget = resolveImportTarget(imp.module, relPath, [{
+      path: relPath,
+      absolutePath,
+      moduleName: detectModuleName(relPath),
+      fileType: ext,
+      size: fileStat.size,
+      contentHash: hash,
+      content,
+    }]);
     await callReducer('insert_dependency', {
       sourceFile: relPath,
-      targetFile: imp.module,
+      targetFile: resolvedTarget,
       depType: 'import',
     });
   }
@@ -258,6 +269,17 @@ export async function reindexFile(filePath: string, projectRoot: string, config?
       signals: JSON.stringify(exp.signals),
       usageCount: BigInt(0),
       description: exp.description,
+    });
+  }
+
+  for (const entry of parseResult.customEntries) {
+    const plugin = registry.getPluginForFile(relPath);
+    await callReducer('insert_custom_entry', {
+      pluginName: plugin.name,
+      entryType: entry.entryType,
+      entryKey: entry.entryKey,
+      entryValue: entry.entryValue,
+      filePath: entry.filePath,
     });
   }
 

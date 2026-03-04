@@ -12,11 +12,15 @@ This folder contains detailed, English-language operational documentation for co
    - End-to-end test flow for Grafeo MCP.
    - Minimum release-blocking smoke suite and failure triage.
 
+3. [MCP Tools Reference](./tools.md)
+   - Full tool list with inputs and expected behavior.
+
 ## Recommended Reading Order
 
 1. Read `../AGENTS.md` for contribution and safety workflow.
 2. Run the setup in `agent-quickstart.md`.
 3. Validate MCP behavior with `mcp-validation.md`.
+4. Keep `tools.md` open when implementing new tool usage.
 
 ## Scope
 

@@ -51,6 +51,7 @@
   },
   "files": [
     "dist/",
+    "spacetimedb/",
     "README.md",
     "LICENSE"
   ],

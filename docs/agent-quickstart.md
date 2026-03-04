@@ -8,7 +8,7 @@ Use this when a coding agent needs to set up Grafeo in a fresh environment witho
 - SpacetimeDB CLI installed
 - Repository cloned locally
 
-## One-Pass Setup Steps
+## One-Pass Setup Steps (from source)
 
 Run these commands from the Grafeo repository root:
 
@@ -21,6 +21,19 @@ spacetime publish grafeo -s local -p ./spacetimedb --no-config -y
 npx tsx src/cli.ts init .
 SPACETIMEDB_DB=grafeo npx tsx src/cli.ts index .
 npx tsx src/cli.ts setup windsurf
+```
+
+## One-Pass Setup Steps (npm package)
+
+Run these commands from the target project root:
+
+```bash
+npm install --save-dev grafeo-mcp
+spacetime start
+spacetime publish grafeo -s local -p node_modules/grafeo-mcp/spacetimedb --no-config -y
+npx grafeo init .
+SPACETIMEDB_DB=grafeo npx grafeo index .
+npx grafeo setup windsurf
 ```
 
 ## One-Shot Prompt for Coding Agents
@@ -39,7 +52,7 @@ Goals:
 6) Run MCP smoke tests and report pass/fail with evidence
 
 Execution requirements:
-- Use this exact order:
+- Use this exact order (from the repo root):
   a) npm install
   b) npm run build
   c) (cd spacetimedb && npm install)
@@ -64,5 +77,6 @@ Execution requirements:
 
 ## Notes
 
+- For npm-based setup, replace `npx grafeo` with `grafeo` if installed globally.
 - For Cursor or Claude Desktop, replace `setup windsurf` with `setup cursor` or `setup claude`.
 - If `npm publish` is required later, make sure account 2FA/token policy is satisfied first.
