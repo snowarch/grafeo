@@ -1,0 +1,60 @@
+{
+  "name": "grafeo-mcp",
+  "version": "0.1.0",
+  "description": "Deep code intelligence for AI agents — persistent, relational codebase understanding powered by SpacetimeDB",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snowarch/grafeo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/snowarch/grafeo/issues"
+  },
+  "homepage": "https://github.com/snowarch/grafeo#readme",
+  "bin": {
+    "grafeo": "./dist/cli.js",
+    "grafeo-mcp": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "mcp": "tsx src/mcp-server.ts",
+    "index": "tsx src/cli.ts index",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "code-intelligence",
+    "ai",
+    "spacetimedb",
+    "indexer",
+    "code-graph",
+    "developer-tools"
+  ],
+  "author": "snowarch",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "~5.6.2",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
