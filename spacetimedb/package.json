@@ -2,6 +2,7 @@
   "name": "grafeo-spacetimedb-module",
   "version": "0.1.0",
   "description": "SpacetimeDB module for Grafeo — code intelligence knowledge base",
+  "type": "module",
   "scripts": {
     "build": "spacetime build",
     "publish": "spacetime publish"

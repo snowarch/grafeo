@@ -1,7 +1,12 @@
 // SpacetimeDB HTTP API client for Grafeo
 
-const SPACETIMEDB_URL = process.env.SPACETIMEDB_URL || 'http://127.0.0.1:3000';
-const SPACETIMEDB_DB = process.env.SPACETIMEDB_DB || 'grafeo';
+let SPACETIMEDB_URL = process.env.SPACETIMEDB_URL || 'http://127.0.0.1:3000';
+let SPACETIMEDB_DB = process.env.SPACETIMEDB_DB || 'grafeo';
+
+export function setDbConfig(cfg: { url?: string; database?: string }): void {
+  if (cfg.url) SPACETIMEDB_URL = cfg.url;
+  if (cfg.database) SPACETIMEDB_DB = cfg.database;
+}
 
 export interface SqlResult {
   schema: {
@@ -15,6 +20,8 @@ export interface SqlResult {
 }
 
 export async function sql(query: string): Promise<SqlResult[]> {
+  SPACETIMEDB_URL = process.env.SPACETIMEDB_URL || SPACETIMEDB_URL;
+  SPACETIMEDB_DB = process.env.SPACETIMEDB_DB || SPACETIMEDB_DB;
   const res = await fetch(`${SPACETIMEDB_URL}/v1/database/${SPACETIMEDB_DB}/sql`, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
@@ -28,10 +35,17 @@ export async function sql(query: string): Promise<SqlResult[]> {
 }
 
 export async function callReducer(reducer: string, args: Record<string, unknown>): Promise<void> {
+  SPACETIMEDB_URL = process.env.SPACETIMEDB_URL || SPACETIMEDB_URL;
+  SPACETIMEDB_DB = process.env.SPACETIMEDB_DB || SPACETIMEDB_DB;
   const res = await fetch(`${SPACETIMEDB_URL}/v1/database/${SPACETIMEDB_DB}/call/${reducer}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(args),
+    body: JSON.stringify(args, (_k, v) => {
+      if (typeof v !== 'bigint') return v;
+      const maxSafe = BigInt(Number.MAX_SAFE_INTEGER);
+      if (v <= maxSafe && v >= -maxSafe) return Number(v);
+      return v.toString();
+    }),
   });
   if (!res.ok) {
     const text = await res.text();

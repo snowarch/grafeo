@@ -7,7 +7,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { sql, callReducer, sqlRowsToObjects } from './db.js';
+import { sql, callReducer, sqlRowsToObjects, setDbConfig } from './db.js';
 import { indexProject, reindexFile } from './indexer/index.js';
 import { readFile as fsReadFile, stat, readdir } from 'node:fs/promises';
 import { join, extname, relative } from 'node:path';
@@ -24,6 +24,9 @@ let projectConfig: GrafeoConfig | null = null;
 async function getConfig(): Promise<GrafeoConfig | null> {
   if (!projectConfig) {
     projectConfig = await loadConfig(PROJECT_ROOT);
+    if (projectConfig?.spacetimedb) {
+      setDbConfig(projectConfig.spacetimedb);
+    }
   }
   return projectConfig;
 }

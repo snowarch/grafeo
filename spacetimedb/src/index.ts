@@ -1,4 +1,7 @@
-import { schema, table, t } from 'spacetimedb/server';
+import * as server from 'spacetimedb/server';
+
+const { schema, table } = server;
+const t = (server as any).t as any;
 
 // =============================================================================
 // Grafeo — Universal code intelligence knowledge base for AI agents
@@ -168,15 +171,15 @@ export default spacetimedb;
 // Lifecycle hooks
 // =============================================================================
 
-export const init = spacetimedb.init(_ctx => {
+export const init = spacetimedb.init((_ctx: any) => {
   console.info('[Grafeo] Module initialized');
 });
 
-export const onConnect = spacetimedb.clientConnected(_ctx => {
+export const onConnect = spacetimedb.clientConnected((_ctx: any) => {
   console.info('[Grafeo] Client connected');
 });
 
-export const onDisconnect = spacetimedb.clientDisconnected(_ctx => {
+export const onDisconnect = spacetimedb.clientDisconnected((_ctx: any) => {
   console.info('[Grafeo] Client disconnected');
 });
 
@@ -195,7 +198,7 @@ export const upsert_file = spacetimedb.reducer(
     purpose: t.string(),
     complexity: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     const existing = ctx.db.files.path.find(args.path);
     if (existing) {
       ctx.db.files.path.delete(args.path);
@@ -206,12 +209,12 @@ export const upsert_file = spacetimedb.reducer(
 
 export const delete_file = spacetimedb.reducer(
   { path: t.string() },
-  (ctx, { path }) => {
+  (ctx: any, { path }: any) => {
     ctx.db.files.path.delete(path);
   }
 );
 
-export const clear_files = spacetimedb.reducer(ctx => {
+export const clear_files = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.files.iter()) {
     ctx.db.files.path.delete(row.path);
   }
@@ -231,14 +234,14 @@ export const insert_symbol = spacetimedb.reducer(
     isPublic: t.bool(),
     description: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.symbols.insert({ id: 0n, ...args });
   }
 );
 
 export const delete_symbols_for_file = spacetimedb.reducer(
   { filePath: t.string() },
-  (ctx, { filePath }) => {
+  (ctx: any, { filePath }: any) => {
     for (const sym of ctx.db.symbols.iter()) {
       if (sym.filePath === filePath) {
         ctx.db.symbols.id.delete(sym.id);
@@ -247,7 +250,7 @@ export const delete_symbols_for_file = spacetimedb.reducer(
   }
 );
 
-export const clear_symbols = spacetimedb.reducer(ctx => {
+export const clear_symbols = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.symbols.iter()) {
     ctx.db.symbols.id.delete(row.id);
   }
@@ -263,14 +266,14 @@ export const insert_dependency = spacetimedb.reducer(
     targetFile: t.string(),
     depType: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.dependencies.insert({ id: 0n, ...args });
   }
 );
 
 export const delete_deps_for_file = spacetimedb.reducer(
   { sourceFile: t.string() },
-  (ctx, { sourceFile }) => {
+  (ctx: any, { sourceFile }: any) => {
     for (const dep of ctx.db.dependencies.iter()) {
       if (dep.sourceFile === sourceFile) {
         ctx.db.dependencies.id.delete(dep.id);
@@ -279,7 +282,7 @@ export const delete_deps_for_file = spacetimedb.reducer(
   }
 );
 
-export const clear_dependencies = spacetimedb.reducer(ctx => {
+export const clear_dependencies = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.dependencies.iter()) {
     ctx.db.dependencies.id.delete(row.id);
   }
@@ -300,7 +303,7 @@ export const upsert_export = spacetimedb.reducer(
     usageCount: t.u64(),
     description: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     const existing = ctx.db.exports.name.find(args.name);
     if (existing) {
       ctx.db.exports.name.delete(args.name);
@@ -309,7 +312,7 @@ export const upsert_export = spacetimedb.reducer(
   }
 );
 
-export const clear_exports = spacetimedb.reducer(ctx => {
+export const clear_exports = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.exports.iter()) {
     ctx.db.exports.name.delete(row.name);
   }
@@ -328,7 +331,7 @@ export const upsert_module_summary = spacetimedb.reducer(
     entryPoint: t.string(),
     relatedModules: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     const existing = ctx.db.moduleSummaries.moduleName.find(args.moduleName);
     if (existing) {
       ctx.db.moduleSummaries.moduleName.delete(args.moduleName);
@@ -337,7 +340,7 @@ export const upsert_module_summary = spacetimedb.reducer(
   }
 );
 
-export const clear_module_summaries = spacetimedb.reducer(ctx => {
+export const clear_module_summaries = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.moduleSummaries.iter()) {
     ctx.db.moduleSummaries.moduleName.delete(row.moduleName);
   }
@@ -349,7 +352,7 @@ export const clear_module_summaries = spacetimedb.reducer(ctx => {
 
 export const upsert_project_meta = spacetimedb.reducer(
   { key: t.string(), value: t.string() },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     const existing = ctx.db.projectMeta.key.find(args.key);
     if (existing) {
       ctx.db.projectMeta.key.delete(args.key);
@@ -358,7 +361,7 @@ export const upsert_project_meta = spacetimedb.reducer(
   }
 );
 
-export const clear_project_meta = spacetimedb.reducer(ctx => {
+export const clear_project_meta = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.projectMeta.iter()) {
     ctx.db.projectMeta.key.delete(row.key);
   }
@@ -376,12 +379,12 @@ export const insert_custom_entry = spacetimedb.reducer(
     entryValue: t.string(),
     filePath: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.customEntries.insert({ id: 0n, ...args });
   }
 );
 
-export const clear_custom_entries = spacetimedb.reducer(ctx => {
+export const clear_custom_entries = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.customEntries.iter()) {
     ctx.db.customEntries.id.delete(row.id);
   }
@@ -389,7 +392,7 @@ export const clear_custom_entries = spacetimedb.reducer(ctx => {
 
 export const clear_custom_entries_for_plugin = spacetimedb.reducer(
   { pluginName: t.string() },
-  (ctx, { pluginName }) => {
+  (ctx: any, { pluginName }: any) => {
     for (const row of ctx.db.customEntries.iter()) {
       if (row.pluginName === pluginName) {
         ctx.db.customEntries.id.delete(row.id);
@@ -411,14 +414,14 @@ export const insert_decision = spacetimedb.reducer(
     createdAt: t.u64(),
     tags: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.decisions.insert({ id: 0n, ...args });
   }
 );
 
 export const delete_decision = spacetimedb.reducer(
   { id: t.u64() },
-  (ctx, { id }) => {
+  (ctx: any, { id }: any) => {
     ctx.db.decisions.id.delete(id);
   }
 );
@@ -434,14 +437,14 @@ export const insert_convention = spacetimedb.reducer(
     example: t.string(),
     rationale: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.conventions.insert({ id: 0n, ...args });
   }
 );
 
 export const delete_convention = spacetimedb.reducer(
   { id: t.u64() },
-  (ctx, { id }) => {
+  (ctx: any, { id }: any) => {
     ctx.db.conventions.id.delete(id);
   }
 );
@@ -457,21 +460,21 @@ export const insert_annotation = spacetimedb.reducer(
     createdAt: t.u64(),
     category: t.string(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.annotations.insert({ id: 0n, ...args });
   }
 );
 
 export const delete_annotation = spacetimedb.reducer(
   { id: t.u64() },
-  (ctx, { id }) => {
+  (ctx: any, { id }: any) => {
     ctx.db.annotations.id.delete(id);
   }
 );
 
 export const delete_annotations_for_file = spacetimedb.reducer(
   { filePath: t.string() },
-  (ctx, { filePath }) => {
+  (ctx: any, { filePath }: any) => {
     for (const ann of ctx.db.annotations.iter()) {
       if (ann.filePath === filePath) {
         ctx.db.annotations.id.delete(ann.id);
@@ -493,7 +496,7 @@ export const insert_task = spacetimedb.reducer(
     createdAt: t.u64(),
     updatedAt: t.u64(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.tasks.insert({ id: 0n, ...args });
   }
 );
@@ -505,7 +508,7 @@ export const update_task = spacetimedb.reducer(
     context: t.string(),
     updatedAt: t.u64(),
   },
-  (ctx, { id, status, context, updatedAt }) => {
+  (ctx: any, { id, status, context, updatedAt }: any) => {
     const existing = ctx.db.tasks.id.find(id);
     if (!existing) {
       throw new Error(`Task ${id} not found`);
@@ -517,7 +520,7 @@ export const update_task = spacetimedb.reducer(
 
 export const delete_task = spacetimedb.reducer(
   { id: t.u64() },
-  (ctx, { id }) => {
+  (ctx: any, { id }: any) => {
     ctx.db.tasks.id.delete(id);
   }
 );
@@ -534,12 +537,12 @@ export const insert_change = spacetimedb.reducer(
     timestamp: t.u64(),
     relatedTask: t.u64(),
   },
-  (ctx, args) => {
+  (ctx: any, args: any) => {
     ctx.db.changeHistory.insert({ id: 0n, ...args });
   }
 );
 
-export const clear_change_history = spacetimedb.reducer(ctx => {
+export const clear_change_history = spacetimedb.reducer((ctx: any) => {
   for (const row of ctx.db.changeHistory.iter()) {
     ctx.db.changeHistory.id.delete(row.id);
   }
@@ -549,7 +552,7 @@ export const clear_change_history = spacetimedb.reducer(ctx => {
 // Reducers: Bulk operations for indexer
 // =============================================================================
 
-export const clear_all_index_data = spacetimedb.reducer(ctx => {
+export const clear_all_index_data = spacetimedb.reducer((ctx: any) => {
   for (const r of ctx.db.files.iter()) ctx.db.files.path.delete(r.path);
   for (const r of ctx.db.symbols.iter()) ctx.db.symbols.id.delete(r.id);
   for (const r of ctx.db.dependencies.iter()) ctx.db.dependencies.id.delete(r.id);

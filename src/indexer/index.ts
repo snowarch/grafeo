@@ -2,7 +2,7 @@
 
 import { scanProject, type ScannedFile } from './scanner.js';
 import { PluginRegistry } from '../plugins/registry.js';
-import { callReducer } from '../db.js';
+import { callReducer, setDbConfig } from '../db.js';
 import { loadConfig, type GrafeoConfig } from '../config.js';
 import { join, dirname } from 'node:path';
 
@@ -11,6 +11,8 @@ export async function indexProject(projectRoot: string, config?: GrafeoConfig): 
   if (!cfg) {
     throw new Error(`No Grafeo config found in ${projectRoot}. Run 'grafeo init' first.`);
   }
+
+  setDbConfig(cfg!.spacetimedb);
 
   const registry = new PluginRegistry();
   const startTime = Date.now();
@@ -190,6 +192,8 @@ export async function indexProject(projectRoot: string, config?: GrafeoConfig): 
 export async function reindexFile(filePath: string, projectRoot: string, config?: GrafeoConfig): Promise<void> {
   const cfg = config || await loadConfig(projectRoot);
   if (!cfg) throw new Error('No Grafeo config found');
+
+  setDbConfig(cfg!.spacetimedb);
 
   const registry = new PluginRegistry();
   const { readFile } = await import('node:fs/promises');
