@@ -20,7 +20,7 @@ spacetime start
 spacetime publish grafeo -s local -p ./spacetimedb --no-config -y
 npx tsx src/cli.ts init .
 SPACETIMEDB_DB=grafeo npx tsx src/cli.ts index .
-npx tsx src/cli.ts setup windsurf
+GRAFEO_SETUP_DEV=1 npx tsx src/cli.ts setup windsurf
 ```
 
 ## One-Pass Setup Steps (npm package)
@@ -29,6 +29,7 @@ Run these commands from the target project root:
 
 ```bash
 npm install --save-dev grafeo-mcp
+npm --prefix node_modules/grafeo-mcp/spacetimedb install
 spacetime start
 spacetime publish grafeo -s local -p node_modules/grafeo-mcp/spacetimedb --no-config -y
 npx grafeo init .
@@ -49,7 +50,6 @@ Goals:
 3) Publish SpacetimeDB module locally
 4) Initialize and index this repo with Grafeo
 5) Configure MCP for my IDE
-6) Run MCP smoke tests and report pass/fail with evidence
 
 Execution requirements:
 - Use this exact order (from the repo root):
@@ -60,19 +60,11 @@ Execution requirements:
   e) spacetime publish grafeo -s local -p ./spacetimedb --no-config -y
   f) npx tsx src/cli.ts init .
   g) SPACETIMEDB_DB=grafeo npx tsx src/cli.ts index .
-  h) npx tsx src/cli.ts setup windsurf
-- Then smoke test MCP over stdio by calling at least:
-  - tools/list
-  - get_project_stats
-  - search_codebase(query="indexProject")
-  - get_file_context(path="src/mcp-server.ts")
-  - session_bootstrap
-- If any call returns "Error in <tool>", treat it as release-blocking and fix it.
-- End by printing:
-  - commands run
-  - key outputs
-  - what was fixed
-  - remaining blockers (if any)
+  h) GRAFEO_SETUP_DEV=1 npx tsx src/cli.ts setup windsurf
+
+Validation (optional but recommended): follow docs/mcp-validation.md.
+
+Public npm MCP server entry point: npx -y grafeo-mcp
 ```
 
 ## Notes

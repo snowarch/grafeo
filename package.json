@@ -1,6 +1,6 @@
 {
   "name": "grafeo-mcp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Deep code intelligence for AI agents — persistent, relational codebase understanding powered by SpacetimeDB",
   "type": "module",
   "repository": {
@@ -51,6 +51,7 @@
   },
   "files": [
     "dist/",
+    "docs/",
     "spacetimedb/src/",
     "spacetimedb/package.json",
     "spacetimedb/package-lock.json",

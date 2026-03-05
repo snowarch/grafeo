@@ -32,13 +32,14 @@ spacetime publish grafeo -s local -p ./spacetimedb --no-config -y
 If installed via npm, point to the package module path:
 
 ```bash
+npm --prefix node_modules/grafeo-mcp/spacetimedb install
 spacetime publish grafeo -s local -p node_modules/grafeo-mcp/spacetimedb --no-config -y
 ```
 
 ### 2) Index target project
 
 ```bash
-SPACETIMEDB_DB=grafeo npx tsx src/cli.ts init .
+npx tsx src/cli.ts init .
 SPACETIMEDB_DB=grafeo npx tsx src/cli.ts index .
 ```
 
@@ -62,6 +63,12 @@ Use a Node script with `@modelcontextprotocol/sdk` `StdioClientTransport` and ca
 - `session_bootstrap`
 
 For full coverage, run a complete tool sweep using the list in [`tools.md`](./tools.md).
+
+To start the MCP server over stdio using the published npm package, run:
+
+```bash
+npx -y grafeo-mcp
+```
 
 ## Release-Blocking Failures
 

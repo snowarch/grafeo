@@ -25,3 +25,5 @@ This folder contains detailed, English-language operational documentation for co
 ## Scope
 
 These docs are intentionally operational. Product overview and architecture summary remain in the repository root `README.md`.
+
+For the public npm-installed MCP server entry point, use `npx -y grafeo-mcp`.
