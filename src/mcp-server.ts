@@ -72,7 +72,7 @@ function fuzzyScore(query: string, target: string): number {
 // =============================================================================
 
 const server = new Server(
-  { name: 'grafeo', version: '0.1.0' },
+  { name: 'grafeo', version: '0.1.2' },
   { capabilities: { tools: {} } }
 );
 

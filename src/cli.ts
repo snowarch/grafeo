@@ -151,8 +151,8 @@ async function cmdSetup(ide?: string) {
 
   const packageServerPath = join(projectRoot, 'node_modules', 'grafeo-mcp', 'dist', 'mcp-server.js');
   const packageMcpConfig = {
-    command: 'node',
-    args: [packageServerPath],
+    command: 'npx',
+    args: ['-y', 'grafeo-mcp'],
     env: {
       GRAFEO_PROJECT_ROOT: projectRoot,
       SPACETIMEDB_DB: dbName,
@@ -171,14 +171,8 @@ async function cmdSetup(ide?: string) {
   };
 
   const useDev = await pathExists(devServerPath);
-  const usePackage = await pathExists(packageServerPath);
-  if (!useDev && !usePackage) {
-    console.error('❌ Cannot locate MCP server entry point.');
-    console.error('   Install grafeo-mcp in this project or run from the Grafeo repo.\n');
-    process.exit(1);
-  }
-
-  const selectedConfig = useDev ? devMcpConfig : packageMcpConfig;
+  const forceDev = process.env.GRAFEO_SETUP_DEV === '1';
+  const selectedConfig = forceDev && useDev ? devMcpConfig : packageMcpConfig;
 
   const serverName = `grafeo-${config?.name || 'project'}`;
 

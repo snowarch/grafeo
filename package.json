@@ -1,6 +1,6 @@
 {
   "name": "grafeo-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Deep code intelligence for AI agents — persistent, relational codebase understanding powered by SpacetimeDB",
   "type": "module",
   "repository": {
@@ -13,7 +13,7 @@
   "homepage": "https://github.com/snowarch/grafeo#readme",
   "bin": {
     "grafeo": "dist/cli.js",
-    "grafeo-mcp": "dist/cli.js"
+    "grafeo-mcp": "dist/mcp-server.js"
   },
   "scripts": {
     "build": "tsc",
